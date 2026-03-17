@@ -1,3 +1,4 @@
 requests
 openpyxl
 PyPDF2
+pypyodbc
