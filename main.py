@@ -15,6 +15,7 @@ def main():
     merger = PyPDF2.PdfMerger()
     rgNums = getRgNrFromExcel("PayPal Zahlungseingang 16.03.2026.xlsx")
     pdfPaths = getPfdsFromArchive(rgNums)
+    printLog("Merging Files...")
     for pdfPath in pdfPaths:
         merger.append(pdfPath)
     merger.write("out.pdf")
@@ -67,6 +68,7 @@ def getDocumentfromEasy(url, contextid, docEasyLink, fileName):
         raise ValueError("No DATA found in BLOB field")
     with open(fileName, "wb") as f:
         f.write(base64.b64decode(data.strip()))
+    printLog(f"{fileName} saved!")
 
 
 def logoffEasy(url, contextid):
