@@ -2,3 +2,4 @@ requests
 openpyxl
 PyPDF2
 pypyodbc
+pywin32

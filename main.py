@@ -1,11 +1,12 @@
 import re
 import os
 import base64
+import PyPDF2
 import openpyxl
 import datetime
 import requests
 import pypyodbc
-import PyPDF2
+import win32clipboard
 import xml.etree.ElementTree as ET
 
 myPid = os.getpid()
@@ -13,7 +14,8 @@ myPid = os.getpid()
 
 def main():
     merger = PyPDF2.PdfMerger()
-    rgNums = getRgNrFromExcel("PayPal Zahlungseingang 16.03.2026.xlsx")
+    # rgNums = getRgNrFromExcel("PayPal Zahlungseingang 16.03.2026.xlsx")
+    rgNums = getRgNrFromClipboard()
     pdfPaths = getPfdsFromArchive(rgNums)
     printLog("Merging Files...")
     for pdfPath in pdfPaths:
@@ -21,6 +23,16 @@ def main():
     merger.write("out.pdf")
     merger.close()
     printLog("Done!")
+
+
+def getRgNrFromClipboard():
+    win32clipboard.OpenClipboard()
+    try:
+        data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
+    finally:
+        win32clipboard.CloseClipboard()
+
+    return data.split("\r\n")
 
 
 def getRgNrFromExcel(pathToExcel):
