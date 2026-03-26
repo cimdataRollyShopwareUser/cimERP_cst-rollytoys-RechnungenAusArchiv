@@ -5,7 +5,6 @@ import PyPDF2
 import openpyxl
 import datetime
 import requests
-import pypyodbc
 import win32clipboard
 import xml.etree.ElementTree as ET
 
@@ -83,6 +82,15 @@ def getDocumentfromEasy(url, contextid, docEasyLink, fileName):
     printLog(f"{fileName} saved!")
 
 
+def searchForBelegNr(url, contextid, belegnr):
+    headers = {"Content-Type": "text/xml; charset=utf-8"}
+    payload = f"""<REQUEST XMLID="XMLID" CONTEXTID="{contextid}"><QUERY REQUESTID="0" HITPOSITION="1" MAXHITCOUNT="2000"><EQL>SELECT * FROM /CD2000 WHERE CD2000.Belegnummer = '{belegnr}'</EQL></QUERY></REQUEST>"""
+    response = requests.post(url, data=payload, headers=headers, verify=False)
+    root = ET.fromstring(response.text)
+    hitline = root.find(".//HITLINE")
+    return hitline.get("EASYDOCREF")
+
+
 def logoffEasy(url, contextid):
     headers = {"Content-Type": "text/xml; charset=utf-8"}
     payload = f"""<?xml version="1.0" encoding="UTF-8"?><REQUEST XMLID="XMLID" CONTEXTID="{contextid}"><LOGOUT REQUESTID="0"/></REQUEST>"""
@@ -92,12 +100,14 @@ def logoffEasy(url, contextid):
 def getPfdsFromArchive(rgNums):
     contextid = logonEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", "cd2000", "cd2000")
     exportedDocuments = []
-    db = pypyodbc.connect("DSN=betrieb01")
+    #db = pypyodbc.connect("DSN=betrieb01")
     for num, rgNum in enumerate(rgNums):
-        docEasyLink = getEasyDocIdFromDatabase(db, rgNum)
-        getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink, f"{num:010}.pdf")
+        # docEasyLink = getEasyDocIdFromDatabase(db, rgNum)
+        docEasyLink = searchForBelegNr("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, rgNum)
+        getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink,
+                            f"{num:010}.pdf")
         exportedDocuments.append(f"{num:010}.pdf")
-    db.close()
+    #db.close()
     logoffEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid)
     return exportedDocuments
 
