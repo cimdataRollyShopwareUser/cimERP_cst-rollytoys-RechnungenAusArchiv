@@ -2,7 +2,6 @@ import re
 import os
 import base64
 import PyPDF2
-import openpyxl
 import datetime
 import requests
 import win32clipboard
@@ -12,16 +11,16 @@ myPid = os.getpid()
 
 
 def main():
+    outFileName = "out.pdf"
     merger = PyPDF2.PdfMerger()
-    # rgNums = getRgNrFromExcel("PayPal Zahlungseingang 16.03.2026.xlsx")
     rgNums = getRgNrFromClipboard()
     pdfPaths = getPfdsFromArchive(rgNums)
     printLog("Merging Files...")
     for pdfPath in pdfPaths:
         merger.append(pdfPath)
-    merger.write("out.pdf")
+    merger.write(outFileName)
     merger.close()
-    printLog("Done!")
+    printLog(f"{outFileName} written. Done!")
 
 
 def getRgNrFromClipboard():
@@ -30,19 +29,7 @@ def getRgNrFromClipboard():
         data = win32clipboard.GetClipboardData(win32clipboard.CF_UNICODETEXT)
     finally:
         win32clipboard.CloseClipboard()
-
-    return data.split("\r\n")
-
-
-def getRgNrFromExcel(pathToExcel):
-    wb = openpyxl.load_workbook(pathToExcel)
-    ws = wb.active
-
-    rgNums = []
-    for row in ws.iter_rows(min_col=4, max_col=4, min_row=2, values_only=True):
-        rgNums.append(row[0])
-
-    return rgNums
+    return data.split("\r\n")[:-1]
 
 
 def logonEasy(url, user, pw):
@@ -58,12 +45,6 @@ def logonEasy(url, user, pw):
     contextid = re.search(r'CONTEXTID="([^"]+)"', response.text).group(1)
     printLog(f"Easy Login Context ID: {contextid}")
     return contextid
-
-
-def getEasyDocIdFromDatabase(db, rgNum):
-    with db.cursor() as cur:
-        cur.execute(f"SELECT easy_docid FROM easy_schnittstelle WHERE belegnummer = {rgNum}")
-        return cur.fetchall()[0][0]
 
 
 def getDocumentfromEasy(url, contextid, docEasyLink, fileName):
@@ -100,15 +81,12 @@ def logoffEasy(url, contextid):
 def getPfdsFromArchive(rgNums):
     contextid = logonEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", "cd2000", "cd2000")
     exportedDocuments = []
-    # db = pypyodbc.connect("DSN=betrieb01")
     for num, rgNum in enumerate(rgNums):
         fileName = f"{rgNum}.pdf"
-        printLog(f"Downloading {rgNum} as {fileName} ({num+1}/{len(rgNums)})...")
-        # docEasyLink = getEasyDocIdFromDatabase(db, rgNum)
+        printLog(f"Downloading {rgNum} as {fileName} ({num + 1}/{len(rgNums)})...")
         docEasyLink = searchForBelegNr("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, rgNum)
         getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink, fileName)
         exportedDocuments.append(fileName)
-    # db.close()
     logoffEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid)
     return exportedDocuments
 
