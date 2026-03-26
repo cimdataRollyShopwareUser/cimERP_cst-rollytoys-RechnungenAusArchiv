@@ -8,6 +8,11 @@ import win32clipboard
 import xml.etree.ElementTree as ET
 
 myPid = os.getpid()
+easyUser = "cd2000"
+easyPass = "cd2000"
+easyCd2000Archivname = "CD2000"
+easyCd2000Schemaname = "CD2000"
+easyURL = "http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver"
 
 
 def main():
@@ -65,7 +70,7 @@ def getDocumentfromEasy(url, contextid, docEasyLink, fileName):
 
 def searchForBelegNr(url, contextid, belegnr):
     headers = {"Content-Type": "text/xml; charset=utf-8"}
-    payload = f"""<REQUEST XMLID="XMLID" CONTEXTID="{contextid}"><QUERY REQUESTID="0" HITPOSITION="1" MAXHITCOUNT="2000"><EQL>SELECT * FROM /CD2000 WHERE CD2000.Belegnummer = '{belegnr}'</EQL></QUERY></REQUEST>"""
+    payload = f"""<REQUEST XMLID="XMLID" CONTEXTID="{contextid}"><QUERY REQUESTID="0" HITPOSITION="1" MAXHITCOUNT="2000"><EQL>SELECT * FROM /{easyCd2000Archivname} WHERE {easyCd2000Schemaname}.Belegnummer = '{belegnr}'</EQL></QUERY></REQUEST>"""
     response = requests.post(url, data=payload, headers=headers, verify=False)
     root = ET.fromstring(response.text)
     hitline = root.find(".//HITLINE")
@@ -79,15 +84,15 @@ def logoffEasy(url, contextid):
 
 
 def getPfdsFromArchive(rgNums):
-    contextid = logonEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", "cd2000", "cd2000")
+    contextid = logonEasy(easyURL, easyUser, easyPass)
     exportedDocuments = []
     for num, rgNum in enumerate(rgNums):
         fileName = f"{rgNum}.pdf"
         printLog(f"Downloading {rgNum} as {fileName} ({num + 1}/{len(rgNums)})...")
-        docEasyLink = searchForBelegNr("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, rgNum)
-        getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink, fileName)
+        docEasyLink = searchForBelegNr(easyURL, contextid, rgNum)
+        getDocumentfromEasy(easyURL, contextid, docEasyLink, fileName)
         exportedDocuments.append(fileName)
-    logoffEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid)
+    logoffEasy(easyURL, contextid)
     return exportedDocuments
 
 
