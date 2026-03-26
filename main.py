@@ -100,14 +100,13 @@ def logoffEasy(url, contextid):
 def getPfdsFromArchive(rgNums):
     contextid = logonEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", "cd2000", "cd2000")
     exportedDocuments = []
-    #db = pypyodbc.connect("DSN=betrieb01")
+    # db = pypyodbc.connect("DSN=betrieb01")
     for num, rgNum in enumerate(rgNums):
         # docEasyLink = getEasyDocIdFromDatabase(db, rgNum)
         docEasyLink = searchForBelegNr("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, rgNum)
-        getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink,
-                            f"{num:010}.pdf")
+        getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink, f"{num:010}.pdf")
         exportedDocuments.append(f"{num:010}.pdf")
-    #db.close()
+    # db.close()
     logoffEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid)
     return exportedDocuments
 
