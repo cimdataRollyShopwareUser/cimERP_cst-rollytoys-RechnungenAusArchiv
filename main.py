@@ -56,7 +56,7 @@ def logonEasy(url, user, pw):
 					</REQUEST>"""
     response = requests.post(url, data=payload, headers=headers, verify=False)
     contextid = re.search(r'CONTEXTID="([^"]+)"', response.text).group(1)
-    printLog(f"Context ID: {contextid}")
+    printLog(f"Easy Login Context ID: {contextid}")
     return contextid
 
 
@@ -102,10 +102,12 @@ def getPfdsFromArchive(rgNums):
     exportedDocuments = []
     # db = pypyodbc.connect("DSN=betrieb01")
     for num, rgNum in enumerate(rgNums):
+        fileName = f"{rgNum}.pdf"
+        printLog(f"Downloading {rgNum} as {fileName} ({num+1}/{len(rgNums)})...")
         # docEasyLink = getEasyDocIdFromDatabase(db, rgNum)
         docEasyLink = searchForBelegNr("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, rgNum)
-        getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink, f"{num:010}.pdf")
-        exportedDocuments.append(f"{num:010}.pdf")
+        getDocumentfromEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid, docEasyLink, fileName)
+        exportedDocuments.append(fileName)
     # db.close()
     logoffEasy("http://snarchiv-1:9090/eex-xmlserver/eex-xmlserver", contextid)
     return exportedDocuments
